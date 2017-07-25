@@ -1,15 +1,24 @@
-from troposphere import Template
+from troposphere import Template, Join, GetAtt
 from troposphere.dynamodb import (KeySchema, AttributeDefinition,
                                   ProvisionedThroughput)
 from troposphere.dynamodb import Table
 from troposphere.sqs import Queue
+from troposphere.awslambda import Function, Code
+from troposphere.iam import Role, Policy
 
 class Dynamo_db(object):
     def __init__(self, sceptre_user_data):
         self.template = Template()
         self.sceptre_user_data = sceptre_user_data
+        self.lambda_db_entry_to_sqs = [
+            "exports.handler = (event, context, callback) => {"
+            "   // TODO implement"
+            "   callback(null, 'Hello from Lambda');"
+            "};",
+        ]
         self.add_dynamo_db()
         self.add_sqs()
+        self.add_lambda_db_entry_to_sqs()
 
     def add_dynamo_db(self):
         self.dynamo_db = self.template.add_resource(Table(
@@ -37,6 +46,47 @@ class Dynamo_db(object):
     		"queue",
     		QueueName=self.sceptre_user_data["queue"]
 		))
+
+    def add_lambda_db_entry_to_sqs(self):
+        self.DBEntryToSQSRole = self.template.add_resource(Role(
+            "DBEntryToSQSRole",
+            RoleName="DBEntryToSQSRole",
+            Policies=[Policy(
+                PolicyName="SQSRole",
+                PolicyDocument={
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Action": [
+                            "sqs:*"
+                        ],
+                        "Resource": "*",
+                        "Effect": "Allow"
+                    }]
+                })],
+            AssumeRolePolicyDocument={
+                "Version": "2012-10-17",
+                "Statement": [{
+                    "Action": ["sts:AssumeRole"],
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": ["lambda.amazonaws.com"]
+                    }
+                }]
+            },
+        ))
+
+        self.DBEntryToSQSFunction = self.template.add_resource(Function(
+            "DBEntryToSQSFunction",
+            FunctionName="DBEntryToSQSFunction",
+            Code=Code(
+                ZipFile=Join("\n", self.lambda_db_entry_to_sqs)
+            ),
+            Handler="index.handler",
+            Role=GetAtt("DBEntryToSQSRole", "Arn"),
+            Runtime="nodejs6.10",
+            MemorySize=self.sceptre_user_data["lambda_db_entry_to_sqs"]["MemorySize"],
+            Timeout=self.sceptre_user_data["lambda_db_entry_to_sqs"]["Timeout"]
+        ))
 
 
 def sceptre_handler(sceptre_user_data):
