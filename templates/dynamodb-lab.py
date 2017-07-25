@@ -61,7 +61,8 @@ class Dynamo_db(object):
                     "Statement": [{
                         "Action": [
                             "sqs:*",
-                            "dynamodb:*"
+                            "dynamodb:*",
+                            "logs:*"
                         ],
                         "Resource": "*",
                         "Effect": "Allow"
