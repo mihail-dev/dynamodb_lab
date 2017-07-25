@@ -4,3 +4,4 @@ sceptre_user_data:
   HashKeyElementType: S
   ReadCapacityUnits: 5
   WriteCapacityUnits: 5
+  queue: test-queue

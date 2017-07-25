@@ -2,12 +2,14 @@ from troposphere import Template
 from troposphere.dynamodb import (KeySchema, AttributeDefinition,
                                   ProvisionedThroughput)
 from troposphere.dynamodb import Table
+from troposphere.sqs import Queue
 
 class Dynamo_db(object):
     def __init__(self, sceptre_user_data):
         self.template = Template()
         self.sceptre_user_data = sceptre_user_data
         self.add_dynamo_db()
+        self.add_sqs()
 
     def add_dynamo_db(self):
         self.dynamo_db = self.template.add_resource(Table(
@@ -29,6 +31,13 @@ class Dynamo_db(object):
                 WriteCapacityUnits=self.sceptre_user_data["WriteCapacityUnits"]
             )
         ))
+
+    def add_sqs(self):
+    	self.sqs = self.template.add_resource(Queue(
+    		"queue",
+    		QueueName=self.sceptre_user_data["queue"]
+		))
+
 
 def sceptre_handler(sceptre_user_data):
     dynamo_db = Dynamo_db(sceptre_user_data)
