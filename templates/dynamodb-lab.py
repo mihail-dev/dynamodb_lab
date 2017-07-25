@@ -1,9 +1,9 @@
 from troposphere import Template, Join, GetAtt
 from troposphere.dynamodb import (KeySchema, AttributeDefinition,
-                                  ProvisionedThroughput)
+                                  ProvisionedThroughput, StreamSpecification)
 from troposphere.dynamodb import Table
 from troposphere.sqs import Queue
-from troposphere.awslambda import Function, Code
+from troposphere.awslambda import Function, Code, EventSourceMapping
 from troposphere.iam import Role, Policy
 
 class Dynamo_db(object):
@@ -38,6 +38,9 @@ class Dynamo_db(object):
             ProvisionedThroughput=ProvisionedThroughput(
                 ReadCapacityUnits=self.sceptre_user_data["ReadCapacityUnits"],
                 WriteCapacityUnits=self.sceptre_user_data["WriteCapacityUnits"]
+            ),
+            StreamSpecification=StreamSpecification(
+                StreamViewType="NEW_AND_OLD_IMAGES"
             )
         ))
 
