@@ -1,0 +1,6 @@
+template_path: templates/dynamodb-lab.py
+sceptre_user_data:
+  HashKeyElementName: testHash
+  HashKeyElementType: S
+  ReadCapacityUnits: 5
+  WriteCapacityUnits: 5
