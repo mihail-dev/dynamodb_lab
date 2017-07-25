@@ -60,7 +60,8 @@ class Dynamo_db(object):
                     "Version": "2012-10-17",
                     "Statement": [{
                         "Action": [
-                            "sqs:*"
+                            "sqs:*",
+                            "dynamodb:*"
                         ],
                         "Resource": "*",
                         "Effect": "Allow"
@@ -91,6 +92,13 @@ class Dynamo_db(object):
             Timeout=self.sceptre_user_data["lambda_db_entry_to_sqs"]["Timeout"]
         ))
 
+        self.LambdaDDBTrigger = self.template.add_resource(EventSourceMapping(
+            "LambdaDDBTrigger",
+            DependsOn='DBEntryToSQSFunction',
+            EventSourceArn=GetAtt("dynamoDBTable", "StreamArn"),
+            FunctionName="DBEntryToSQSFunction",
+            StartingPosition="TRIM_HORIZON"
+        ))
 
 def sceptre_handler(sceptre_user_data):
     dynamo_db = Dynamo_db(sceptre_user_data)
