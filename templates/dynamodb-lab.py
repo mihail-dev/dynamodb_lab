@@ -1,4 +1,4 @@
-from troposphere import Template, Join, GetAtt
+from troposphere import Template, Join, GetAtt, Ref
 from troposphere.dynamodb import (KeySchema, AttributeDefinition,
                                   ProvisionedThroughput, StreamSpecification)
 from troposphere.dynamodb import Table
@@ -34,13 +34,13 @@ class Dynamo_db(object):
                 WriteCapacityUnits=self.sceptre_user_data["WriteCapacityUnits"]
             ),
             StreamSpecification=StreamSpecification(
-                StreamViewType="NEW_AND_OLD_IMAGES"
+                StreamViewType="NEW_IMAGE"
             )
         ))
 
     def add_sqs(self):
     	self.sqs = self.template.add_resource(Queue(
-    		"queue",
+    		"emailQueue",
     		QueueName=self.sceptre_user_data["queue"]
 		))
 
@@ -78,11 +78,16 @@ class Dynamo_db(object):
             "DBEntryToSQSFunction",
             FunctionName="DBEntryToSQSFunction",
             Code=Code(
-                ZipFile=Join("\n", [
-                    "import cfnresponse, json",
-                    "def dynamodb_stream_handler(event, context): ",
-                    "  print(event)",
-                    "  return event",
+                ZipFile=Join("", [
+                    "import cfnresponse, boto3\n",
+                    "def dynamodb_stream_handler(event, context): \n",
+                    "  email = event['Records'][0]['dynamodb']['NewImage']['testHash']['S']\n",
+                    "  sqs = boto3.client('sqs')\n",
+                    "  response = sqs.send_message(\n",
+                    "    QueueUrl='", Ref(self.sqs), "',\n",
+                    "    MessageBody=(email)\n",
+                    "  )\n",
+                    "  return email",
                 ])
             ),
             Handler="index.dynamodb_stream_handler",
