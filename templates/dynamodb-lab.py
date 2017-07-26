@@ -80,10 +80,12 @@ class Dynamo_db(object):
             Code=Code(
                 ZipFile=Join("\n", [
                     "import cfnresponse, json",
-                    "// TODO implement",
+                    "def dynamodb_stream_handler(event, context): ",
+                    "  print(event)",
+                    "  return event",
                 ])
             ),
-            Handler="index.handler",
+            Handler="index.dynamodb_stream_handler",
             Role=GetAtt("DBEntryToSQSRole", "Arn"),
             Runtime="python3.6",
             MemorySize=self.sceptre_user_data["lambda_db_entry_to_sqs"]["MemorySize"],
