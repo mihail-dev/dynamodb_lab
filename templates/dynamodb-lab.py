@@ -10,12 +10,6 @@ class Dynamo_db(object):
     def __init__(self, sceptre_user_data):
         self.template = Template()
         self.sceptre_user_data = sceptre_user_data
-        self.lambda_db_entry_to_sqs = [
-            "exports.handler = (event, context, callback) => {"
-            "   // TODO implement"
-            "   callback(null, 'Hello from Lambda');"
-            "};",
-        ]
         self.add_dynamo_db()
         self.add_sqs()
         self.add_lambda_db_entry_to_sqs()
@@ -84,11 +78,14 @@ class Dynamo_db(object):
             "DBEntryToSQSFunction",
             FunctionName="DBEntryToSQSFunction",
             Code=Code(
-                ZipFile=Join("\n", self.lambda_db_entry_to_sqs)
+                ZipFile=Join("\n", [
+                    "import cfnresponse, json",
+                    "// TODO implement",
+                ])
             ),
             Handler="index.handler",
             Role=GetAtt("DBEntryToSQSRole", "Arn"),
-            Runtime="nodejs6.10",
+            Runtime="python3.6",
             MemorySize=self.sceptre_user_data["lambda_db_entry_to_sqs"]["MemorySize"],
             Timeout=self.sceptre_user_data["lambda_db_entry_to_sqs"]["Timeout"]
         ))
